@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <!-- NOMBRE DEL CONTENEDOR EN MINÚSCULAS PARA EVITAR ERRORES -->
+  <Name>media-manager-pro</Name>
+  <Repository>jvdivx/media-manager-pro:latest</Repository>
+  <Registry>https://hub.docker.com/</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://forums.unraid.net/</Support>
+  <Project/>
+  <Overview>
+    Gestor de biblioteca multimedia avanzado (Python/Flask).
+    [br][br]
+    [b]Características:[/b][br]
+    - Organización de Series/Películas[br]
+    - Análisis de Calidad (FFmpeg/Mediainfo/SQL)[br]
+    - Consolidación de discos Array[br]
+    - Reparación de permisos[br]
+    - Reportes HTML y gestión de usuarios Plex[br]
+    [br]
+    [b]Configuración:[/b][br]
+    Los scripts y el código se cargan desde la imagen Docker (inmutable).
+    Los logs, reportes y archivos generados se guardan en /app/datos.
+  </Overview>
+  <Category>Tools:Utilities MediaApp:Other</Category>
+  <WebUI>http://[IP]:[PORT:5000]/</WebUI>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/python-icon.png</Icon>
+  <ExtraParams>--restart unless-stopped</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Description>Gestor multimedia integral con interfaz Web y WebSockets.</Description>
+  <Networking>
+    <Mode>bridge</Mode>
+    <Publish>
+      <Port>
+        <HostPort>5000</HostPort>
+        <ContainerPort>5000</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+    </Publish>
+  </Networking>
+  <Data>
+    <!-- 1. MAPEO DE DATOS PERSISTENTES (Logs, Reportes HTML) -->
+    <Volume>
+      <HostDir>/mnt/user/appdata/media-manager/datos</HostDir>
+      <ContainerDir>/app/datos</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    
+    <!-- 2. ACCESO A DISCOS (Para mover archivos) -->
+    <Volume>
+      <HostDir>/mnt</HostDir>
+      <ContainerDir>/mnt</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    
+    <!-- 3. ACCESO A PLEX (Solo lectura, para scripts SQL) -->
+    <Volume>
+        <HostDir>/mnt/user/appdata/plex</HostDir>
+        <ContainerDir>/mnt/user/appdata/plex</ContainerDir>
+        <Mode>ro</Mode>
+    </Volume>
+  </Data>
+  <Environment>
+    <Variable>
+      <Value>Europe/Madrid</Value>
+      <Name>TZ</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>99</Value>
+      <Name>PUID</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>100</Value>
+      <Name>PGID</Name>
+      <Mode/>
+    </Variable>
+  </Environment>
+  
+  <!-- CONFIGURACIÓN VISIBLE EN LA GUI DE UNRAID -->
+  
+  <Config Name="Puerto Web" Target="5000" Default="5000" Mode="tcp" Description="Puerto de acceso a la web." Type="Port" Display="always" Required="true" Mask="false">5000</Config>
+  
+  <Config Name="Datos y Logs" Target="/app/datos" Default="/mnt/user/appdata/media-manager/datos" Mode="rw" Description="Ruta donde se guardarán reportes y logs persistentes." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/media-manager/datos</Config>
+  
+  <Config Name="Acceso Discos (/mnt)" Target="/mnt" Default="/mnt" Mode="rw" Description="Acceso global para mover archivos." Type="Path" Display="always" Required="true" Mask="false">/mnt</Config>
+  
+  <Config Name="Plex Appdata" Target="/mnt/user/appdata/plex" Default="/mnt/user/appdata/plex" Mode="ro" Description="Ruta a la carpeta de Plex (para leer bases de datos)." Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/plex</Config>
+
+  <Config Name="Zona Horaria" Target="TZ" Default="Europe/Madrid" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false">Europe/Madrid</Config>
+  
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+
+</Container>

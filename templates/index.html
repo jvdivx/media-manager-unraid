@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Server Control Panel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #0f1115;
+            --bg-panel: #181b21;
+            --bg-card: #22262e;
+            --bg-terminal: #0d0d0d;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --error: #ef4444;
+            --warn: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 350px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo span { color: var(--accent); }
+
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .script-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .script-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .script-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        }
+
+        .script-card h3 { font-size: 0.95rem; margin-bottom: 5px; color: #fff; }
+        .script-card p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+        
+        .script-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            opacity: 0.1;
+            font-size: 2rem;
+        }
+
+        /* MAIN CONTENT */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-panel);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--success);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* TERMINAL MULTI-CONSOLE */
+        .terminal-container {
+            background-color: var(--bg-terminal);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .terminal-header {
+            background: #1a1a1a;
+            padding: 10px 15px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+        }
+        .terminal-body {
+            flex: 1;
+            padding: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow-y: auto;
+            color: #d4d4d4;
+            white-space: pre-wrap;
+        }
+
+        /* ESTILOS PARA CADA CONSOLA DE PROCESO */
+        .proc-console {
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: #090909;
+        }
+        .proc-header {
+            background: #141414;
+            padding: 6px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .proc-title { font-weight: 600; color: #fff; }
+        .proc-status { font-size: 0.75rem; font-weight: bold; }
+        .proc-status.running { color: var(--warn); animation: pulse 1s infinite; }
+        .proc-status.success { color: var(--success); }
+        .proc-status.error { color: var(--error); }
+        .proc-status.stopped { color: #ef4444; } /* Nuevo estilo para cancelado */
+        
+        .proc-body { padding: 8px 10px; }
+
+        /* FILE MANAGER */
+        .files-container {
+            background-color: var(--bg-panel);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .files-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.2s;
+            border-radius: 6px;
+        }
+        .file-item:hover { background-color: rgba(255,255,255,0.03); }
+        
+        .file-info { display: flex; flex-direction: column; gap: 4px; }
+        .file-name { font-size: 0.9rem; color: #fff; font-weight: 500; text-decoration: none; }
+        .file-meta { font-size: 0.75rem; color: var(--text-muted); }
+        
+        .file-actions a {
+            color: var(--text-muted);
+            margin-left: 10px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+        }
+        .file-actions a:hover { color: #fff; background: var(--accent); }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 16px;
+            width: 450px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .modal h2 { margin-bottom: 20px; font-size: 1.2rem; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted); }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px;
+            background: var(--bg-body); border: 1px solid var(--border);
+            color: #fff; border-radius: 6px; outline: none;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+        .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+        .tag-html { color: #e44d26; font-weight: bold; font-size: 0.7rem; border: 1px solid #e44d26; padding: 1px 4px; border-radius: 3px; margin-right: 5px;}
+        .tag-log { color: #888; font-size: 0.7rem; border: 1px solid #888; padding: 1px 4px; border-radius: 3px; margin-right: 5px;}
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">
+            <span>⚡</span> MEDIA CONTROL
+        </div>
+        
+        <div class="section-title">Scripts Disponibles</div>
+        <div class="script-grid">
+            {% for key, script in scripts.items() %}
+            <div class="script-card" onclick="prepararScript('{{ key }}')">
+                <div class="script-icon">
+                    {% if 'organizer' in key %}🧩{% elif 'catalog' in key %}📋{% elif 'permissions' in key %}🛡️{% elif 'analyze' in key %}📊{% elif 'scanner' in key %}🎬{% else %}⚙️{% endif %}
+                </div>
+                <h3>{{ script.nombre }}</h3>
+                <p>{{ script.desc }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="top-bar">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="global-status-text">Sistema Online</span>
+            </div>
+            <div style="font-size: 0.9rem; color: var(--text-muted);">
+                v4.1 FUSION
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <span>CONSOLE OUTPUT</span>
+                    <span id="term-status" style="color: var(--accent);">SIN PROCESOS</span>
+                </div>
+                <div class="terminal-body" id="terminal">
+                    <div style="color: #666;">> Esperando comandos...</div>
+                </div>
+            </div>
+
+            <div class="files-container">
+                <div class="files-header">
+                    <h3>Reportes & Logs</h3>
+                    <button class="refresh-btn" onclick="cargarArchivos()">↻</button>
+                </div>
+                <div class="file-list" id="file-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="paramModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Configurar Script</h2>
+            <div id="modalForm"></div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="ejecutarScriptConfirmado()">EJECUTAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const terminal = document.getElementById('terminal');
+        const termStatus = document.getElementById('term-status');
+        const globalStatusText = document.getElementById('global-status-text');
+        let currentScript = null;
+        let scriptConfig = null;
+        
+        const allScripts = {{ scripts | tojson | safe }};
+        const consoles = {};
+
+        console.log("Scripts cargados correctamente:", allScripts);
+
+        function updateGlobalStatus() {
+            const running = Object.values(consoles).filter(c => c.status === 'running').length;
+            if (running === 0) {
+                termStatus.textContent = "SIN PROCESOS";
+                termStatus.style.color = "var(--accent)";
+                globalStatusText.textContent = "Sistema Online";
+            } else {
+                termStatus.textContent = `EJECUTANDO (${running})`;
+                termStatus.style.color = "var(--warn)";
+                globalStatusText.textContent = `Procesos activos: ${running}`;
+            }
+        }
+
+        function createConsole(process_id, script_name, comando) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'proc-console';
+            wrapper.id = `proc-${process_id}`;
+
+            const header = document.createElement('div');
+            header.className = 'proc-header';
+            
+            // Izquierda: Título
+            const leftDiv = document.createElement('div');
+            leftDiv.style.display = 'flex';
+            leftDiv.style.alignItems = 'center';
+            leftDiv.style.gap = '10px';
+            const title = document.createElement('span');
+            title.className = 'proc-title';
+            title.textContent = `${script_name} [${process_id}]`;
+            leftDiv.appendChild(title);
+
+            // Derecha: Status + Botón STOP
+            const rightDiv = document.createElement('div');
+            rightDiv.style.display = 'flex';
+            rightDiv.style.alignItems = 'center';
+            rightDiv.style.gap = '10px';
+
+            const statusSpan = document.createElement('span');
+            statusSpan.className = 'proc-status running';
+            statusSpan.id = `proc-status-${process_id}`;
+            statusSpan.textContent = 'RUNNING...';
+
+            // === BOTÓN PARAR ===
+            const stopBtn = document.createElement('button');
+            stopBtn.innerHTML = '⛔ PARAR';
+            stopBtn.id = `btn-stop-${process_id}`;
+            stopBtn.style.background = '#ef4444';
+            stopBtn.style.color = 'white';
+            stopBtn.style.border = 'none';
+            stopBtn.style.padding = '3px 8px';
+            stopBtn.style.borderRadius = '4px';
+            stopBtn.style.cursor = 'pointer';
+            stopBtn.style.fontSize = '0.7rem';
+            stopBtn.style.fontWeight = 'bold';
+            stopBtn.onclick = function() { detenerScript(process_id); };
+
+            rightDiv.appendChild(statusSpan);
+            rightDiv.appendChild(stopBtn);
+
+            header.appendChild(leftDiv);
+            header.appendChild(rightDiv);
+
+            const body = document.createElement('div');
+            body.className = 'proc-body';
+            body.id = `proc-body-${process_id}`;
+            
+            const firstLine = document.createElement('div');
+            firstLine.style.color = 'var(--accent)';
+            firstLine.textContent = `>>> ${comando}`;
+            body.appendChild(firstLine);
+
+            wrapper.appendChild(header);
+            wrapper.appendChild(body);
+
+            if (Object.keys(consoles).length === 0) terminal.innerHTML = '';
+
+            terminal.appendChild(wrapper);
+            terminal.scrollTop = terminal.scrollHeight;
+
+            consoles[process_id] = { id: process_id, status: 'running', bodyEl: body, statusEl: statusSpan, btnEl: stopBtn };
+            updateGlobalStatus();
+        }
+
+        function appendToConsole(process_id, html) {
+            const c = consoles[process_id];
+            if (!c) return;
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            c.bodyEl.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // Lógica para pedir al backend que mate el proceso
+        function detenerScript(pid) {
+            if(confirm('¿Seguro que quieres detener este proceso inmediatamente?')) {
+                const c = consoles[pid];
+                if(c && c.btnEl) {
+                    c.btnEl.disabled = true;
+                    c.btnEl.textContent = 'DETENIENDO...';
+                    c.btnEl.style.background = '#666';
+                }
+                socket.emit('stop_script', { process_id: pid });
+            }
+        }
+
+        socket.on('connect', () => console.log("✅ Conectado al WebSocket"));
+        
+        socket.on('script_start', (data) => {
+            createConsole(data.process_id, data.script_name, data.comando);
+        });
+
+        socket.on('script_output', (msg) => appendToConsole(msg.process_id, msg.data));
+
+        socket.on('script_complete', (data) => {
+            const c = consoles[data.process_id];
+            if (!c) return;
+            
+            // Si ya está parado (por el usuario), no hacemos nada
+            if(c.status === 'stopped') return;
+
+            c.status = data.status === 'success' ? 'success' : 'error';
+            c.statusEl.classList.remove('running');
+            c.statusEl.classList.add(c.status);
+            c.statusEl.textContent = data.status === 'success' ? `OK (code ${data.code})` : `ERROR (code ${data.code})`;
+            
+            if(c.btnEl) c.btnEl.remove(); // Quitar botón
+
+            const div = document.createElement('div');
+            div.textContent = `<<< Proceso finalizado con código: ${data.code}`;
+            div.style.color = data.status === 'success' ? 'var(--success)' : 'var(--error)';
+            c.bodyEl.appendChild(div);
+            
+            terminal.scrollTop = terminal.scrollHeight;
+            updateGlobalStatus();
+            cargarArchivos();
+        });
+
+        // Escuchar confirmación de parada
+        socket.on('script_stopped', (data) => {
+            const pid = data.process_id;
+            const c = consoles[pid];
+            if (!c) return;
+
+            c.status = 'stopped';
+            c.statusEl.classList.remove('running');
+            c.statusEl.classList.add('stopped');
+            c.statusEl.textContent = 'CANCELADO';
+            
+            if(c.btnEl) c.btnEl.remove();
+
+            const div = document.createElement('div');
+            div.innerHTML = `<br>🛑 <strong>PROCESO DETENIDO POR EL USUARIO</strong>`;
+            div.style.color = '#ef4444';
+            c.bodyEl.appendChild(div);
+            
+            terminal.scrollTop = terminal.scrollHeight;
+            updateGlobalStatus();
+        });
+
+        window.prepararScript = function(key) {
+            currentScript = key;
+            scriptConfig = allScripts[key];
+            if (!scriptConfig) return;
+            
+            const formContainer = document.getElementById('modalForm');
+            document.getElementById('modalTitle').innerText = scriptConfig.nombre;
+            formContainer.innerHTML = '';
+
+            // GENERAR FORMULARIO
+            if (scriptConfig.args_form && scriptConfig.args_form.length > 0) {
+                scriptConfig.args_form.forEach(field => {
+                    const group = document.createElement('div');
+                    group.className = 'form-group';
+                    const label = document.createElement('label');
+                    label.innerText = field.label;
+                    group.appendChild(label);
+                    
+                    let input;
+                    if (field.type === 'select') {
+                        input = document.createElement('select');
+                        input.id = `field_${field.name}`;
+                        field.options.forEach(opt => {
+                            const option = document.createElement('option');
+                            option.value = opt.value;
+                            option.innerText = opt.label;
+                            input.appendChild(option);
+                        });
+                    } else {
+                        input = document.createElement('input');
+                        input.type = field.type || 'text';
+                        input.id = `field_${field.name}`;
+                        if (field.default) input.value = field.default;
+                    }
+                    group.appendChild(input);
+                    formContainer.appendChild(group);
+                });
+            } else {
+                // CONFIRMACIÓN SIN ARGUMENTOS
+                const msg = document.createElement('div');
+                if(key.includes('permissions')) {
+                    // Mensaje especial para permisos
+                    msg.innerHTML = `
+                        <div style="background:#2d3748; padding:15px; border-radius:8px; border:1px solid #4a5568;">
+                            <div style="color:#fca5a5; font-weight:bold; margin-bottom:10px;">⚠️ REPARACIÓN DE PERMISOS</div>
+                            <div style="font-size:0.85rem; color:#cbd5e0; line-height:1.5;">
+                                Se aplicarán permisos estándar Unraid recursivamente:
+                                <ul style="margin:10px 0 10px 20px; padding:0;">
+                                    <li><strong>Propietario:</strong> nobody:users (99:100)</li>
+                                    <li><strong>Directorios:</strong> 2775 (drwxrwsr-x)</li>
+                                    <li><strong>Archivos:</strong> 664 (rw-rw-r--)</li>
+                                </ul>
+                                Esto asegura compatibilidad total con Docker y SMB.<br>
+                                <em>El proceso puede tardar varios minutos.</em>
+                            </div>
+                        </div>
+                        <div style="margin-top:20px; text-align:center; color:var(--text-muted);">¿Deseas continuar?</div>
+                    `;
+                } else {
+                    msg.innerHTML = `<p style="color:var(--text-muted); margin-top:10px;">¿Confirmas la ejecución de <strong>${scriptConfig.nombre}</strong>?</p>`;
+                }
+                formContainer.appendChild(msg);
+            }
+            
+            document.getElementById('paramModal').style.display = 'flex';
+        };
+
+        window.closeModal = function() { document.getElementById('paramModal').style.display = 'none'; };
+
+        window.ejecutarScriptConfirmado = function() {
+            const params = {};
+            if (scriptConfig.args_form) {
+                scriptConfig.args_form.forEach(field => {
+                    const el = document.getElementById(`field_${field.name}`);
+                    if(el) params[field.name] = el.value;
+                });
+            }
+            closeModal();
+            socket.emit('run_script', { script: currentScript, params: params });
+        };
+
+        async function cargarArchivos() {
+            try {
+                const res = await fetch('/api/files');
+                const files = await res.json();
+                const list = document.getElementById('file-list');
+                list.innerHTML = '';
+                files.forEach(f => {
+                    const isHtml = f.name.endsWith('.html');
+                    const tagClass = isHtml ? 'tag-html' : 'tag-log';
+                    const tagText = isHtml ? 'HTML' : 'LOG';
+                    let sizeStr = f.size > 1024*1024 ? (f.size/(1024*1024)).toFixed(2) + " MB" : (f.size/1024).toFixed(2) + " KB";
+
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.innerHTML = `<div class="file-info"><div style="display:flex; align-items:center;"><span class="${tagClass}">${tagText}</span><a href="/view/${f.name}" target="_blank" class="file-name">${f.name}</a></div><span class="file-meta">${f.date} • ${sizeStr}</span></div><div class="file-actions"><a href="/view/${f.name}" target="_blank" title="Ver">👁️</a><a href="/download/${f.name}" title="Descargar">⬇️</a></div>`;
+                    list.appendChild(item);
+                });
+            } catch(e) {}
+        }
+
+        cargarArchivos();
+        setInterval(cargarArchivos, 30000);
+    </script>
+</body>
+</html>

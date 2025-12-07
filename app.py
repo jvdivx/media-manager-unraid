@@ -125,6 +125,12 @@ SCRIPTS_CONFIG = {
         "archivo": "10_generar_movimientos_peliculas_sd.py",
         "desc": "Detecta Películas < 720p, genera reporte HTML y script de movimiento.",
         "args_form": []
+    },
+    "manual_tecnico": {
+        "nombre": "11. 📘 Generar Manual Técnico",
+        "archivo": "11_generador_manual.py",
+        "desc": "Genera el documento 'Media Manager Pro - Manual Técnico.docx' con toda la documentación del proyecto.",
+        "args_form": []
     }
 }
 
@@ -141,7 +147,7 @@ def list_files():
     if os.path.exists(LOGS_DIR):
         try:
             for f in os.listdir(LOGS_DIR):
-                if f.startswith("report_") or f.endswith(('.log', '.sh', '.csv', '.html')):
+                if f.startswith("report_") or f.endswith(('.log', '.sh', '.csv', '.html', '.docx')):
                     path = os.path.join(LOGS_DIR, f)
                     stats = os.stat(path)
                     files.append({
@@ -162,8 +168,13 @@ def download_file(filename):
 @app.route('/view/<path:filename>')
 def view_file(filename):
     response = send_from_directory(LOGS_DIR, filename, as_attachment=False)
-    if filename.lower().endswith('.html'):
+    lower_name = filename.lower()
+    if lower_name.endswith('.html'):
         response.headers["Content-Type"] = "text/html; charset=utf-8"
+    elif lower_name.endswith('.docx'):
+        # Forzar descarga para docx ya que no se ve en navegador
+        response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+        response.headers["Content-Type"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     else:
         response.headers["Content-Type"] = "text/plain; charset=utf-8"
     return response
@@ -301,5 +312,5 @@ def handle_stop_script(data):
         print(f"No se encontró proceso activo con ID {pid_key}")
 
 if __name__ == '__main__':
-    print("🚀 Servidor V4.7 (Full Suite + Movimientos SD) iniciado en puerto 5000", flush=True)
+    print("🚀 Servidor V4.8 (Full Suite + Manual Técnico) iniciado en puerto 5000", flush=True)
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

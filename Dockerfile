@@ -14,7 +14,7 @@ WORKDIR /app
 # Instalar dependencias python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir flask flask-socketio eventlet
+    && pip install --no-cache-dir flask flask-socketio eventlet python-docx
 
 # Copiar código
 COPY . .

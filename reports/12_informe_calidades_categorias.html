@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe de Calidades por Categoría</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(30, 30, 46, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+        }
+        .timestamp {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #ff6b6b;
+            border-bottom: 2px solid #ff6b6b;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        tr:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .quality-2160p { color: #ff6b6b; font-weight: bold; }
+        .quality-1080p { color: #4ecdc4; font-weight: bold; }
+        .quality-720p { color: #95e1d3; }
+        .quality-576p { color: #f38181; }
+        .quality-480p { color: #feca57; }
+        .quality-sd { color: #a29bfe; }
+        .quality-desconocida { color: #636e72; }
+        .total-row {
+            background: rgba(0, 217, 255, 0.1);
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .dataTables_wrapper {
+            color: #e0e0e0;
+        }
+        .dataTables_filter input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Informe de Calidades por Categoría</h1>
+        <div class="timestamp">Generado: 10/12/2025 15:09:28</div>
+        
+        <h2>🎬 Series por Categoría</h2>
+        <table id="tableSeries" class="display">
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>2160p</th>
+                    <th>1080p</th>
+                    <th>720p</th>
+                    <th>576p</th>
+                    <th>480p</th>
+                    <th>SD</th>
+                    <th>Desconocida</th>
+                    <th>Total Archivos</th>
+                    <th>Tamaño Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Dibujos</strong></td>
+                    <td class='quality-2160p'>15 (11.89 GB)</td>
+                    <td class='quality-1080p'>30745 (17.73 TB)</td>
+                    <td class='quality-720p'>4658 (1.26 TB)</td>
+                    <td class='quality-576p'>445 (134.69 GB)</td>
+                    <td class='quality-480p'>382 (63.88 GB)</td>
+                    <td class='quality-sd'>4 (665.10 MB)</td>
+                    <td class='quality-desconocida'>708 (449.88 GB)</td>
+                    <td><strong>36957</strong></td>
+                    <td><strong>19.64 TB</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Documentales</strong></td>
+                    <td class='quality-2160p'>1 (1.84 GB)</td>
+                    <td class='quality-1080p'>8502 (14.61 TB)</td>
+                    <td class='quality-720p'>1129 (944.44 GB)</td>
+                    <td class='quality-576p'>2 (939.07 MB)</td>
+                    <td class='quality-480p'>20 (7.19 GB)</td>
+                    <td class='quality-sd'>7 (1.15 GB)</td>
+                    <td class='quality-desconocida'>0 (0.00 B)</td>
+                    <td><strong>9661</strong></td>
+                    <td><strong>15.54 TB</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Series HD</strong></td>
+                    <td class='quality-2160p'>18 (45.06 GB)</td>
+                    <td class='quality-1080p'>76118 (94.15 TB)</td>
+                    <td class='quality-720p'>15215 (9.02 TB)</td>
+                    <td class='quality-576p'>262 (126.63 GB)</td>
+                    <td class='quality-480p'>780 (209.37 GB)</td>
+                    <td class='quality-sd'>44 (9.69 GB)</td>
+                    <td class='quality-desconocida'>24 (11.28 GB)</td>
+                    <td><strong>92461</strong></td>
+                    <td><strong>103.56 TB</strong></td>
+                </tr>
+                <tr class='total-row'>
+                    <td>TOTAL SERIES</td>
+                    <td>34 (58.79 GB)</td>
+                    <td>115365 (126.49 TB)</td>
+                    <td>21002 (11.20 TB)</td>
+                    <td>709 (262.24 GB)</td>
+                    <td>1182 (280.44 GB)</td>
+                    <td>55 (11.49 GB)</td>
+                    <td>732 (461.16 GB)</td>
+                    <td>139079</td>
+                    <td>138.74 TB</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>🎥 Películas por Categoría</h2>
+        <table id="tablePeliculas" class="display">
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>2160p</th>
+                    <th>1080p</th>
+                    <th>720p</th>
+                    <th>576p</th>
+                    <th>480p</th>
+                    <th>SD</th>
+                    <th>Desconocida</th>
+                    <th>Total Archivos</th>
+                    <th>Tamaño Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Conciertos</strong></td>
+                    <td class='quality-2160p'>1 (2.36 GB)</td>
+                    <td class='quality-1080p'>497 (2.16 TB)</td>
+                    <td class='quality-720p'>153 (411.78 GB)</td>
+                    <td class='quality-576p'>1 (883.49 MB)</td>
+                    <td class='quality-480p'>0 (0.00 B)</td>
+                    <td class='quality-sd'>0 (0.00 B)</td>
+                    <td class='quality-desconocida'>2 (3.06 GB)</td>
+                    <td><strong>654</strong></td>
+                    <td><strong>2.57 TB</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Documentales</strong></td>
+                    <td class='quality-2160p'>2 (6.89 GB)</td>
+                    <td class='quality-1080p'>958 (2.94 TB)</td>
+                    <td class='quality-720p'>110 (204.03 GB)</td>
+                    <td class='quality-576p'>4 (6.22 GB)</td>
+                    <td class='quality-480p'>6 (14.51 GB)</td>
+                    <td class='quality-sd'>0 (0.00 B)</td>
+                    <td class='quality-desconocida'>1 (455.13 MB)</td>
+                    <td><strong>1081</strong></td>
+                    <td><strong>3.17 TB</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Peliculas HD</strong></td>
+                    <td class='quality-2160p'>23 (107.13 GB)</td>
+                    <td class='quality-1080p'>19049 (64.66 TB)</td>
+                    <td class='quality-720p'>2547 (10.26 TB)</td>
+                    <td class='quality-576p'>280 (515.18 GB)</td>
+                    <td class='quality-480p'>588 (755.07 GB)</td>
+                    <td class='quality-sd'>125 (99.05 GB)</td>
+                    <td class='quality-desconocida'>30 (86.15 GB)</td>
+                    <td><strong>22642</strong></td>
+                    <td><strong>76.45 TB</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Uploads</strong></td>
+                    <td class='quality-2160p'>0 (0.00 B)</td>
+                    <td class='quality-1080p'>1 (4.42 GB)</td>
+                    <td class='quality-720p'>0 (0.00 B)</td>
+                    <td class='quality-576p'>0 (0.00 B)</td>
+                    <td class='quality-480p'>0 (0.00 B)</td>
+                    <td class='quality-sd'>0 (0.00 B)</td>
+                    <td class='quality-desconocida'>0 (0.00 B)</td>
+                    <td><strong>1</strong></td>
+                    <td><strong>4.42 GB</strong></td>
+                </tr>
+                <tr class='total-row'>
+                    <td>TOTAL PELÍCULAS</td>
+                    <td>26 (116.38 GB)</td>
+                    <td>20505 (69.77 TB)</td>
+                    <td>2810 (10.86 TB)</td>
+                    <td>285 (522.26 GB)</td>
+                    <td>594 (769.58 GB)</td>
+                    <td>125 (99.05 GB)</td>
+                    <td>33 (89.65 GB)</td>
+                    <td>24378</td>
+                    <td>82.19 TB</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <script>
+            $(document).ready(function() {{
+                $('#tableSeries').DataTable({{
+                    "pageLength": 25,
+                    "order": [[0, "asc"]],
+                    "language": {{
+                        "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+                    }}
+                }});
+                
+                $('#tablePeliculas').DataTable({{
+                    "pageLength": 25,
+                    "order": [[0, "asc"]],
+                    "language": {{
+                        "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+                    }}
+                }});
+            }});
+        </script>
+    </div>
+</body>
+</html>

@@ -131,6 +131,12 @@ SCRIPTS_CONFIG = {
         "archivo": "11_generador_manual.py",
         "desc": "Genera el documento 'Media Manager Pro - Manual Técnico.docx' con toda la documentación del proyecto.",
         "args_form": []
+    },
+    "resumen_categorias": {
+        "nombre": "12. Informe de Calidades (Series/Pelis)",
+        "archivo": "12_resumen_biblioteca.py",
+        "desc": "Analiza carpetas por categoría (HD, Conciertos, etc) y genera informe detallado de calidades.",
+        "args_form": []
     }
 }
 
@@ -147,7 +153,7 @@ def list_files():
     if os.path.exists(LOGS_DIR):
         try:
             for f in os.listdir(LOGS_DIR):
-                if f.startswith("report_") or f.endswith(('.log', '.sh', '.csv', '.html', '.docx')):
+                if f.startswith("report_") or f.startswith("12_") or f.endswith(('.log', '.sh', '.csv', '.html', '.docx')):
                     path = os.path.join(LOGS_DIR, f)
                     stats = os.stat(path)
                     files.append({
@@ -312,5 +318,5 @@ def handle_stop_script(data):
         print(f"No se encontró proceso activo con ID {pid_key}")
 
 if __name__ == '__main__':
-    print("🚀 Servidor V4.8 (Full Suite + Manual Técnico) iniciado en puerto 5000", flush=True)
+    print("🚀 Servidor V4.9 (Suite Completa + Calidades) iniciado en puerto 5000", flush=True)
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
